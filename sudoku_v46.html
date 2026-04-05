@@ -2,8 +2,8 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sudoku Solver v44</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Sudoku Solver v46</title>
 <style>
 
 :root {
@@ -5992,5 +5992,83 @@ function triggerCelebration(wb, cls){
 }
 
 </script>
+  <script>
+// ==================== v46 UPGRADES - ANDROID LONG-PRESS FIX ====================
+
+document.addEventListener('contextmenu', e => {
+    if (e.target.closest('.cell, .nb, .tech-group-label, button')) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+    }
+}, { passive: false });
+
+let longPressTimer = null;
+let isLongPress = false;
+const LONG_PRESS_DELAY = 480;
+
+function startLongPress(e, callback) {
+    clearTimeout(longPressTimer);
+    isLongPress = false;
+    longPressTimer = setTimeout(() => {
+        isLongPress = true;
+        callback(e);
+    }, LONG_PRESS_DELAY);
+}
+
+function cancelLongPress() {
+    clearTimeout(longPressTimer);
+}
+
+// Improved touch for cells and number buttons
+function upgradeTouchHandlers() {
+    document.querySelectorAll('.cell').forEach(cell => {
+        const idx = parseInt(cell.dataset.idx || cell.id);
+        
+        cell.addEventListener('pointerdown', e => {
+            startLongPress(e, (ev) => {
+                // Call your existing long-press popup function here
+                if (typeof showLongPressPopup === 'function') {
+                    showLongPressPopup(idx, ev);
+                } else if (typeof longPressCell === 'function') {
+                    longPressCell(idx);
+                }
+            });
+        });
+
+        cell.addEventListener('pointerup', () => {
+            cancelLongPress();
+            if (!isLongPress && typeof handleCellTap === 'function') {
+                handleCellTap(idx);
+            }
+        });
+
+        cell.addEventListener('pointermove', cancelLongPress);
+        cell.addEventListener('pointerleave', cancelLongPress);
+    });
+
+    // Same for number buttons
+    document.querySelectorAll('.nb').forEach(btn => {
+        btn.addEventListener('pointerdown', e => {
+            if (btn.dataset.num) {
+                startLongPress(e, () => {
+                    if (typeof handleNumberLongPress === 'function') {
+                        handleNumberLongPress(parseInt(btn.dataset.num));
+                    }
+                });
+            }
+        });
+        btn.addEventListener('pointerup', cancelLongPress);
+        btn.addEventListener('pointermove', cancelLongPress);
+    });
+}
+
+// Run after your original script loads
+window.addEventListener('load', () => {
+    upgradeTouchHandlers();
+    console.log("✅ Sudoku v46 - Android long-press fixed");
+});
+</script>
+</body>
+</html>
 </body>
 </html>
